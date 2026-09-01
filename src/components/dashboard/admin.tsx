@@ -410,7 +410,8 @@ function ApplicationReview({ booking, users, role, onClose, onDecision }: { book
               {allowed ? (
                 <Panel className="grid gap-3">
                   <Label htmlFor="review-note">Internal note / reason</Label>
-                  <Textarea id="review-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Required when rejecting an application." />
+                  <Textarea id="review-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Required when rejecting an application." disabled={saving} />
+                  {failure ? <p role="alert" className="text-sm font-semibold text-destructive">{failure}</p> : null}
                   {confirm ? (
                     <div role="alertdialog" aria-label="Confirm decision" className="rounded-md border border-warning/50 bg-warning/10 p-4">
                       <p className="text-sm font-semibold">Confirm: mark this application {statusInfo(confirm).label.toLowerCase()}?</p>
@@ -421,10 +422,11 @@ function ApplicationReview({ booking, users, role, onClose, onDecision }: { book
                       </p>
                       {confirm === "rejected" && !note.trim() ? <p className="mt-2 text-sm font-semibold text-destructive">A rejection reason is required.</p> : null}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <Button onClick={() => void submit(confirm)} disabled={confirm === "rejected" && !note.trim()}>Confirm</Button>
-                        <Button variant="outline" onClick={() => setConfirm(null)}>Cancel</Button>
+                        <Button onClick={() => void submit(confirm)} disabled={saving || (confirm === "rejected" && !note.trim())}>{saving ? "Saving…" : "Confirm"}</Button>
+                        <Button variant="outline" onClick={() => setConfirm(null)} disabled={saving}>Cancel</Button>
                       </div>
                     </div>
+
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={() => setConfirm("approved")}>Approve</Button>
