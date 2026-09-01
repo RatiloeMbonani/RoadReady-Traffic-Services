@@ -234,12 +234,26 @@ function Dashboard() {
   }
 
   async function updateBooking(id: string, next: "approved" | "rejected" | "passed" | "failed", note?: string) {
-    const payload: { status: typeof next; admin_notes?: string } = { status: next };
+    const target = bookings.find((booking) => booking.id === id);
+    const payload: { status: typeof next; admin_notes?: string; appointment_date?: string } = { status: next };
     if (note) payload.admin_notes = note;
-    const { error } = await supabase.from("bookings").update(payload).eq("id", id);
-    if (error) toast.error("We couldn't update this application. Please try again.");
-    else { toast.success(`Application marked ${next}`); await loadData(); }
+    if (next === "approved" && target && !target.appointment_date) {
+      payload.appointment_date = new Date(`${target.preferred_date}T09:00:00`).toISOString();
+    }
+    const { data, error } = await supabase.from("bookings").update(payload).eq("id", id).select("id");
+    if (error) {
+      toast.error("We couldn't update this application. Please try again.");
+      throw new Error(error.message);
+    }
+    if (!data?.length) {
+      const message = "This decision was not saved — your account may not have permission to review applications.";
+      toast.error(message);
+      throw new Error(message);
+    }
+    toast.success(`Application marked ${next}`);
+    await loadData();
   }
+
 
   async function updateVehicle(id: string, next: "verified" | "rejected", note?: string) {
     const payload: { registration_status: typeof next; admin_notes?: string } = { registration_status: next };

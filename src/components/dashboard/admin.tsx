@@ -314,21 +314,33 @@ function timelineIndex(status: string) {
 function ApplicationReview({ booking, users, role, onClose, onDecision }: { booking: Booking | null; users: Profile[]; role: AdminRole; onClose: () => void; onDecision: AdminHandlers["onDecision"] }) {
   const [note, setNote] = useState("");
   const [confirm, setConfirm] = useState<Decision | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const applicant = booking ? users.find((user) => user.id === booking.user_id) : undefined;
   const allowed = can(role, "applications:review");
 
   function close() {
     setNote("");
     setConfirm(null);
+    setFailure(null);
+    setSaving(false);
     onClose();
   }
 
   async function submit(decision: Decision) {
-    if (!booking) return;
+    if (!booking || saving) return;
     if (decision === "rejected" && !note.trim()) return;
-    await onDecision(booking.id, decision, note.trim() || undefined);
-    close();
+    setSaving(true);
+    setFailure(null);
+    try {
+      await onDecision(booking.id, decision, note.trim() || undefined);
+      close();
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "We couldn't save this decision. Please try again.");
+      setSaving(false);
+    }
   }
+
 
   return (
     <Dialog open={Boolean(booking)} onOpenChange={(open) => { if (!open) close(); }}>
@@ -398,7 +410,8 @@ function ApplicationReview({ booking, users, role, onClose, onDecision }: { book
               {allowed ? (
                 <Panel className="grid gap-3">
                   <Label htmlFor="review-note">Internal note / reason</Label>
-                  <Textarea id="review-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Required when rejecting an application." />
+                  <Textarea id="review-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Required when rejecting an application." disabled={saving} />
+                  {failure ? <p role="alert" className="text-sm font-semibold text-destructive">{failure}</p> : null}
                   {confirm ? (
                     <div role="alertdialog" aria-label="Confirm decision" className="rounded-md border border-warning/50 bg-warning/10 p-4">
                       <p className="text-sm font-semibold">Confirm: mark this application {statusInfo(confirm).label.toLowerCase()}?</p>
@@ -409,10 +422,11 @@ function ApplicationReview({ booking, users, role, onClose, onDecision }: { book
                       </p>
                       {confirm === "rejected" && !note.trim() ? <p className="mt-2 text-sm font-semibold text-destructive">A rejection reason is required.</p> : null}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <Button onClick={() => void submit(confirm)} disabled={confirm === "rejected" && !note.trim()}>Confirm</Button>
-                        <Button variant="outline" onClick={() => setConfirm(null)}>Cancel</Button>
+                        <Button onClick={() => void submit(confirm)} disabled={saving || (confirm === "rejected" && !note.trim())}>{saving ? "Saving…" : "Confirm"}</Button>
+                        <Button variant="outline" onClick={() => setConfirm(null)} disabled={saving}>Cancel</Button>
                       </div>
                     </div>
+
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={() => setConfirm("approved")}>Approve</Button>
