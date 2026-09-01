@@ -314,21 +314,33 @@ function timelineIndex(status: string) {
 function ApplicationReview({ booking, users, role, onClose, onDecision }: { booking: Booking | null; users: Profile[]; role: AdminRole; onClose: () => void; onDecision: AdminHandlers["onDecision"] }) {
   const [note, setNote] = useState("");
   const [confirm, setConfirm] = useState<Decision | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const applicant = booking ? users.find((user) => user.id === booking.user_id) : undefined;
   const allowed = can(role, "applications:review");
 
   function close() {
     setNote("");
     setConfirm(null);
+    setFailure(null);
+    setSaving(false);
     onClose();
   }
 
   async function submit(decision: Decision) {
-    if (!booking) return;
+    if (!booking || saving) return;
     if (decision === "rejected" && !note.trim()) return;
-    await onDecision(booking.id, decision, note.trim() || undefined);
-    close();
+    setSaving(true);
+    setFailure(null);
+    try {
+      await onDecision(booking.id, decision, note.trim() || undefined);
+      close();
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "We couldn't save this decision. Please try again.");
+      setSaving(false);
+    }
   }
+
 
   return (
     <Dialog open={Boolean(booking)} onOpenChange={(open) => { if (!open) close(); }}>
