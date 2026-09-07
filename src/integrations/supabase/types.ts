@@ -26,6 +26,7 @@ export type Database = {
           traffic_department: string
           updated_at: string
           user_id: string
+          vehicle_class: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -38,6 +39,7 @@ export type Database = {
           traffic_department: string
           updated_at?: string
           user_id: string
+          vehicle_class?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           traffic_department?: string
           updated_at?: string
           user_id?: string
+          vehicle_class?: string | null
         }
         Relationships: []
       }
