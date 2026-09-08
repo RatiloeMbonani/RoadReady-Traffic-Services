@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DataTable, EmptyState, Panel, SectionHeader, StatusBadge } from "@/components/dashboard/primitives";
+import { BookingWizard, type BookingDraft } from "@/components/dashboard/booking-wizard";
+import { FineCheckout } from "@/components/dashboard/fine-checkout";
 import {
   applicationStage,
   applicationSteps,
@@ -324,37 +326,13 @@ export function ApplicationsSection({ bookings, onNavigate, onCancel }: { bookin
 
 /* ------------------------------------------------------------------ Services */
 
-export function ServicesSection({ profile, onBook, onNavigate }: { profile: Profile | null; onBook: (event: FormEvent<HTMLFormElement>) => void; onNavigate: (section: string) => void }) {
+export function ServicesSection({ profile, onBook, onNavigate }: { profile: Profile | null; onBook: (draft: BookingDraft) => Promise<void>; onNavigate: (section: string) => void }) {
   return (
     <div className="space-y-6">
       <SectionHeader title="Traffic services" description="Apply for licence tests and vehicle services from one secure portal." />
 
-      <Panel>
-        <h2 className="text-lg font-bold">Book a driving or learner test</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your request is reviewed by a traffic administrator before an appointment is confirmed.</p>
-        <form onSubmit={onBook} className="mt-5 grid max-w-2xl gap-5">
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-type">Test type</Label>
-            <Select name="type" required>
-              <SelectTrigger id="booking-type"><SelectValue placeholder="Choose test type" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="learners">Learner's licence</SelectItem>
-                <SelectItem value="drivers">Driver's licence</SelectItem>
-              </SelectContent>
-            </Select>
-            {!profile?.learners_number ? <p className="text-xs text-muted-foreground">A recorded learner's licence is required before booking a driver's test.</p> : null}
-          </div>
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-date">Preferred date</Label>
-            <Input id="booking-date" name="date" type="date" required />
-          </div>
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-department">Traffic department</Label>
-            <Input id="booking-department" name="department" placeholder="e.g. Centurion Traffic Department" required />
-          </div>
-          <Button type="submit" className="w-full sm:w-fit">Submit booking</Button>
-        </form>
-      </Panel>
+      <BookingWizard profile={profile} onSubmit={onBook} />
+
 
       <div className="grid gap-4 md:grid-cols-2">
         {[
@@ -439,11 +417,15 @@ export function VehiclesSection({ vehicles, onRegister, onNavigate }: { vehicles
 
 /* --------------------------------------------------------------------- Fines */
 
-export function FinesSection({ fines, onPay }: { fines: Fine[]; onPay: (fine: Fine) => void }) {
+export function FinesSection({ fines, onPaid, onNavigate }: { fines: Fine[]; onPaid: () => Promise<void> | void; onNavigate: (section: string) => void }) {
   const unpaid = fines.filter((fine) => fine.payment_status === "unpaid");
   return (
     <div className="space-y-6">
-      <SectionHeader title="Traffic fines" description="Outstanding and historical fines issued against your record." />
+      <SectionHeader
+        title="Traffic fines"
+        description="Outstanding and historical fines issued against your record."
+        action={<Button variant="outline" size="sm" onClick={() => onNavigate("scan")}>Scan a fine</Button>}
+      />
       {unpaid.length === 0 ? (
         <Panel className="flex items-start gap-3 border-success/40 bg-success/5">
           <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success" />
@@ -466,22 +448,7 @@ export function FinesSection({ fines, onPay }: { fines: Fine[]; onPay: (fine: Fi
                 <div><dt className="text-muted-foreground">Location</dt><dd className="font-medium">{fine.location}</dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild><Button size="sm"><CreditCard aria-hidden="true" /> Pay securely</Button></AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm secure payment</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {currency(Number(fine.amount))} for fine {fine.reference_number} will be recorded through the secure government traffic services channel.
-                        Card processing is not yet activated for this portal — a pending payment record is created and you will be notified when settlement is confirmed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onPay(fine)}>Confirm</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <FineCheckout fine={fine} onPaid={onPaid} />
                 <Dialog>
                   <DialogTrigger asChild><Button size="sm" variant="outline">View details</Button></DialogTrigger>
                   <DialogContent>

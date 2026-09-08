@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Bot, Lock, MessageCircle, Send, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Bot, Loader2, Lock, MessageCircle, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { askTrafficAssistant } from "@/lib/traffic-ai.functions";
 import { currency, formatDate, serviceLabel, statusInfo, type Booking, type Fine, type Vehicle } from "@/lib/dashboard-utils";
 
 type Message = { id: number; from: "user" | "assistant"; text: string };
@@ -27,10 +29,12 @@ export function TrafficAssistant({
   fines: Fine[];
   onNavigate: (section: string) => void;
 }) {
+  const ask = useServerFn(askTrafficAssistant);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: 0, from: "assistant", text: "Hello. I'm the Traffic Services digital assistant. Ask about your applications, vehicles, fines or bookings." },
+    { id: 0, from: "assistant", text: "Hello. I'm the AI Traffic Services assistant. Ask about your applications, vehicles, fines or bookings." },
   ]);
 
   function answer(question: string): string {
@@ -66,15 +70,24 @@ export function TrafficAssistant({
     return "I can help with applications, appointments, vehicles, fines, renewals and required documents. Try one of the suggested questions below.";
   }
 
-  function send(question: string) {
+  async function send(question: string) {
     const trimmed = question.trim();
-    if (!trimmed) return;
-    setMessages((current) => [
-      ...current,
-      { id: current.length, from: "user", text: trimmed },
-      { id: current.length + 1, from: "assistant", text: answer(trimmed) },
-    ]);
+    if (!trimmed || thinking) return;
+    const history = messages
+      .slice(1)
+      .map((message) => ({ role: message.from === "user" ? ("user" as const) : ("assistant" as const), content: message.text }))
+      .slice(-10);
+    setMessages((current) => [...current, { id: current.length, from: "user", text: trimmed }]);
     setInput("");
+    setThinking(true);
+    try {
+      const result = await ask({ data: { question: trimmed, history } });
+      setMessages((current) => [...current, { id: current.length, from: "assistant", text: result.answer }]);
+    } catch {
+      setMessages((current) => [...current, { id: current.length, from: "assistant", text: answer(trimmed) }]);
+    } finally {
+      setThinking(false);
+    }
   }
 
   return (
