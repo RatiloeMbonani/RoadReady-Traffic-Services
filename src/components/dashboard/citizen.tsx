@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DataTable, EmptyState, Panel, SectionHeader, StatusBadge } from "@/components/dashboard/primitives";
+import { BookingWizard, type BookingDraft } from "@/components/dashboard/booking-wizard";
+import { FineCheckout } from "@/components/dashboard/fine-checkout";
 import {
   applicationStage,
   applicationSteps,
