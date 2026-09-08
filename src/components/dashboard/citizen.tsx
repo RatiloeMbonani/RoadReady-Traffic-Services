@@ -324,37 +324,13 @@ export function ApplicationsSection({ bookings, onNavigate, onCancel }: { bookin
 
 /* ------------------------------------------------------------------ Services */
 
-export function ServicesSection({ profile, onBook, onNavigate }: { profile: Profile | null; onBook: (event: FormEvent<HTMLFormElement>) => void; onNavigate: (section: string) => void }) {
+export function ServicesSection({ profile, onBook, onNavigate }: { profile: Profile | null; onBook: (draft: BookingDraft) => Promise<void>; onNavigate: (section: string) => void }) {
   return (
     <div className="space-y-6">
       <SectionHeader title="Traffic services" description="Apply for licence tests and vehicle services from one secure portal." />
 
-      <Panel>
-        <h2 className="text-lg font-bold">Book a driving or learner test</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your request is reviewed by a traffic administrator before an appointment is confirmed.</p>
-        <form onSubmit={onBook} className="mt-5 grid max-w-2xl gap-5">
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-type">Test type</Label>
-            <Select name="type" required>
-              <SelectTrigger id="booking-type"><SelectValue placeholder="Choose test type" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="learners">Learner's licence</SelectItem>
-                <SelectItem value="drivers">Driver's licence</SelectItem>
-              </SelectContent>
-            </Select>
-            {!profile?.learners_number ? <p className="text-xs text-muted-foreground">A recorded learner's licence is required before booking a driver's test.</p> : null}
-          </div>
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-date">Preferred date</Label>
-            <Input id="booking-date" name="date" type="date" required />
-          </div>
-          <div className="field">
-            <Label className="field-label" htmlFor="booking-department">Traffic department</Label>
-            <Input id="booking-department" name="department" placeholder="e.g. Centurion Traffic Department" required />
-          </div>
-          <Button type="submit" className="w-full sm:w-fit">Submit booking</Button>
-        </form>
-      </Panel>
+      <BookingWizard profile={profile} onSubmit={onBook} />
+
 
       <div className="grid gap-4 md:grid-cols-2">
         {[
