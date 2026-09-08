@@ -29,10 +29,12 @@ export function TrafficAssistant({
   fines: Fine[];
   onNavigate: (section: string) => void;
 }) {
+  const ask = useServerFn(askTrafficAssistant);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: 0, from: "assistant", text: "Hello. I'm the Traffic Services digital assistant. Ask about your applications, vehicles, fines or bookings." },
+    { id: 0, from: "assistant", text: "Hello. I'm the AI Traffic Services assistant. Ask about your applications, vehicles, fines or bookings." },
   ]);
 
   function answer(question: string): string {
