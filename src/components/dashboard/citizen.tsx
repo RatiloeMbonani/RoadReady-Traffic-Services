@@ -442,22 +442,7 @@ export function FinesSection({ fines, onPay }: { fines: Fine[]; onPay: (fine: Fi
                 <div><dt className="text-muted-foreground">Location</dt><dd className="font-medium">{fine.location}</dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild><Button size="sm"><CreditCard aria-hidden="true" /> Pay securely</Button></AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm secure payment</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {currency(Number(fine.amount))} for fine {fine.reference_number} will be recorded through the secure government traffic services channel.
-                        Card processing is not yet activated for this portal — a pending payment record is created and you will be notified when settlement is confirmed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onPay(fine)}>Confirm</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <FineCheckout fine={fine} onPaid={onPaid} />
                 <Dialog>
                   <DialogTrigger asChild><Button size="sm" variant="outline">View details</Button></DialogTrigger>
                   <DialogContent>
