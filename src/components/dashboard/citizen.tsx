@@ -415,11 +415,15 @@ export function VehiclesSection({ vehicles, onRegister, onNavigate }: { vehicles
 
 /* --------------------------------------------------------------------- Fines */
 
-export function FinesSection({ fines, onPay }: { fines: Fine[]; onPay: (fine: Fine) => void }) {
+export function FinesSection({ fines, onPaid, onNavigate }: { fines: Fine[]; onPaid: () => Promise<void> | void; onNavigate: (section: string) => void }) {
   const unpaid = fines.filter((fine) => fine.payment_status === "unpaid");
   return (
     <div className="space-y-6">
-      <SectionHeader title="Traffic fines" description="Outstanding and historical fines issued against your record." />
+      <SectionHeader
+        title="Traffic fines"
+        description="Outstanding and historical fines issued against your record."
+        action={<Button variant="outline" size="sm" onClick={() => onNavigate("scan")}>Scan a fine</Button>}
+      />
       {unpaid.length === 0 ? (
         <Panel className="flex items-start gap-3 border-success/40 bg-success/5">
           <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success" />
