@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Bot, Lock, MessageCircle, Send, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Bot, Loader2, Lock, MessageCircle, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { askTrafficAssistant } from "@/lib/traffic-ai.functions";
 import { currency, formatDate, serviceLabel, statusInfo, type Booking, type Fine, type Vehicle } from "@/lib/dashboard-utils";
 
 type Message = { id: number; from: "user" | "assistant"; text: string };
