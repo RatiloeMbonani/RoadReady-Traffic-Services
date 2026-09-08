@@ -70,15 +70,24 @@ export function TrafficAssistant({
     return "I can help with applications, appointments, vehicles, fines, renewals and required documents. Try one of the suggested questions below.";
   }
 
-  function send(question: string) {
+  async function send(question: string) {
     const trimmed = question.trim();
-    if (!trimmed) return;
-    setMessages((current) => [
-      ...current,
-      { id: current.length, from: "user", text: trimmed },
-      { id: current.length + 1, from: "assistant", text: answer(trimmed) },
-    ]);
+    if (!trimmed || thinking) return;
+    const history = messages
+      .slice(1)
+      .map((message) => ({ role: message.from === "user" ? ("user" as const) : ("assistant" as const), content: message.text }))
+      .slice(-10);
+    setMessages((current) => [...current, { id: current.length, from: "user", text: trimmed }]);
     setInput("");
+    setThinking(true);
+    try {
+      const result = await ask({ data: { question: trimmed, history } });
+      setMessages((current) => [...current, { id: current.length, from: "assistant", text: result.answer }]);
+    } catch {
+      setMessages((current) => [...current, { id: current.length, from: "assistant", text: answer(trimmed) }]);
+    } finally {
+      setThinking(false);
+    }
   }
 
   return (
