@@ -38,6 +38,8 @@ import {
   VehiclesSection,
 } from "@/components/dashboard/citizen";
 import { TrafficAssistant } from "@/components/dashboard/traffic-assistant";
+import { DocumentScannerSection } from "@/components/dashboard/document-scanner";
+import type { BookingDraft } from "@/components/dashboard/booking-wizard";
 import { deriveNotices, formatDate, maskIdentifier, serviceLabel, type Booking, type Fine, type Profile, type Vehicle } from "@/lib/dashboard-utils";
 import { AdminAppointments, AdminApplications, AdminCitizens, AdminDocuments, AdminFines, AdminOverview, AdminSearch, AdminSecurity, AdminSettings, AdminVehicles } from "@/components/dashboard/admin";
 import type { AdminRole } from "@/lib/admin-utils";
@@ -72,6 +74,7 @@ const citizenNav: NavGroup[] = [
     { id: "vehicles", label: "My vehicles", icon: Car },
     { id: "applications", label: "Applications", icon: ClipboardList },
     { id: "fines", label: "Fines", icon: Ticket },
+    { id: "scan", label: "Scan a document", icon: FileCheck2 },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "help", label: "Help & support", icon: HelpCircle },
@@ -198,18 +201,20 @@ function Dashboard() {
   const notices = useMemo(() => deriveNotices(bookings, fines, vehicles), [bookings, fines, vehicles]);
   const unread = notices.filter((notice) => !readIds.includes(notice.id)).length;
 
-  async function book(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const type = String(data.get("type")) as "learners" | "drivers";
-    if (type === "drivers" && !profile?.learners_number) {
-      toast.error("A learner's licence must be recorded before booking a driver test.");
-      return;
+  async function book(draft: BookingDraft) {
+    if (draft.type === "drivers" && !profile?.learners_number) {
+      throw new Error("A learner's licence must be recorded before booking a driver test.");
     }
-    const { error } = await supabase.from("bookings").insert({ user_id: user.id, booking_type: type, preferred_date: String(data.get("date")), traffic_department: String(data.get("department")) });
-    if (error) toast.error(error.message);
-    else { toast.success("Booking submitted for approval"); form.reset(); await loadData(); setSection("applications"); }
+    const { error } = await supabase.from("bookings").insert({
+      user_id: user.id,
+      booking_type: draft.type,
+      preferred_date: draft.date,
+      traffic_department: draft.department,
+      vehicle_class: draft.vehicleClass,
+    });
+    if (error) throw new Error(error.message);
+    toast.success("Booking submitted for approval");
+    await loadData();
   }
 
   async function registerVehicle(event: FormEvent<HTMLFormElement>) {
@@ -227,11 +232,6 @@ function Dashboard() {
     else { toast.success("Application cancelled"); await loadData(); }
   }
 
-  async function payFine(fine: Fine) {
-    const { error } = await supabase.from("payments").insert({ user_id: user.id, fine_id: fine.id, amount: fine.amount });
-    if (error) toast.error(error.message);
-    else toast.success(`Payment of R ${Number(fine.amount).toFixed(2)} recorded as pending with the secure traffic services channel.`);
-  }
 
   async function updateBooking(id: string, next: "approved" | "rejected" | "passed" | "failed", note?: string) {
     const target = bookings.find((booking) => booking.id === id);
@@ -449,7 +449,8 @@ function Dashboard() {
                 {section === "services" && <ServicesSection profile={profile} onBook={book} onNavigate={go} />}
                 {section === "vehicles" && <VehiclesSection vehicles={vehicles} onRegister={registerVehicle} onNavigate={go} />}
                 {section === "applications" && <ApplicationsSection bookings={bookings} onNavigate={go} onCancel={(id) => void cancelBooking(id)} />}
-                {section === "fines" && <FinesSection fines={fines} onPay={(fine) => void payFine(fine)} />}
+                {section === "fines" && <FinesSection fines={fines} onPaid={loadData} onNavigate={go} />}
+                {section === "scan" && <DocumentScannerSection vehicles={vehicles} onSaved={loadData} />}
                 {section === "documents" && <DocumentsSection bookings={bookings} vehicles={vehicles} />}
                 {section === "notifications" && (
                   <NotificationsSection
