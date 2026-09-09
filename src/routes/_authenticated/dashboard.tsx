@@ -38,6 +38,8 @@ import {
   VehiclesSection,
 } from "@/components/dashboard/citizen";
 import { TrafficAssistant } from "@/components/dashboard/traffic-assistant";
+import { DocumentScannerSection } from "@/components/dashboard/document-scanner";
+import type { BookingDraft } from "@/components/dashboard/booking-wizard";
 import { deriveNotices, formatDate, maskIdentifier, serviceLabel, type Booking, type Fine, type Profile, type Vehicle } from "@/lib/dashboard-utils";
 import { AdminAppointments, AdminApplications, AdminCitizens, AdminDocuments, AdminFines, AdminOverview, AdminSearch, AdminSecurity, AdminSettings, AdminVehicles } from "@/components/dashboard/admin";
 import type { AdminRole } from "@/lib/admin-utils";
