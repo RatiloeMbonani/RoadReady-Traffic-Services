@@ -72,6 +72,7 @@ const citizenNav: NavGroup[] = [
     { id: "vehicles", label: "My vehicles", icon: Car },
     { id: "applications", label: "Applications", icon: ClipboardList },
     { id: "fines", label: "Fines", icon: Ticket },
+    { id: "scan", label: "Scan a document", icon: FileCheck2 },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "help", label: "Help & support", icon: HelpCircle },
@@ -198,18 +199,20 @@ function Dashboard() {
   const notices = useMemo(() => deriveNotices(bookings, fines, vehicles), [bookings, fines, vehicles]);
   const unread = notices.filter((notice) => !readIds.includes(notice.id)).length;
 
-  async function book(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const type = String(data.get("type")) as "learners" | "drivers";
-    if (type === "drivers" && !profile?.learners_number) {
-      toast.error("A learner's licence must be recorded before booking a driver test.");
-      return;
+  async function book(draft: BookingDraft) {
+    if (draft.type === "drivers" && !profile?.learners_number) {
+      throw new Error("A learner's licence must be recorded before booking a driver test.");
     }
-    const { error } = await supabase.from("bookings").insert({ user_id: user.id, booking_type: type, preferred_date: String(data.get("date")), traffic_department: String(data.get("department")) });
-    if (error) toast.error(error.message);
-    else { toast.success("Booking submitted for approval"); form.reset(); await loadData(); setSection("applications"); }
+    const { error } = await supabase.from("bookings").insert({
+      user_id: user.id,
+      booking_type: draft.type,
+      preferred_date: draft.date,
+      traffic_department: draft.department,
+      vehicle_class: draft.vehicleClass,
+    });
+    if (error) throw new Error(error.message);
+    toast.success("Booking submitted for approval");
+    await loadData();
   }
 
   async function registerVehicle(event: FormEvent<HTMLFormElement>) {
