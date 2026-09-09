@@ -230,11 +230,6 @@ function Dashboard() {
     else { toast.success("Application cancelled"); await loadData(); }
   }
 
-  async function payFine(fine: Fine) {
-    const { error } = await supabase.from("payments").insert({ user_id: user.id, fine_id: fine.id, amount: fine.amount });
-    if (error) toast.error(error.message);
-    else toast.success(`Payment of R ${Number(fine.amount).toFixed(2)} recorded as pending with the secure traffic services channel.`);
-  }
 
   async function updateBooking(id: string, next: "approved" | "rejected" | "passed" | "failed", note?: string) {
     const target = bookings.find((booking) => booking.id === id);
@@ -452,7 +447,8 @@ function Dashboard() {
                 {section === "services" && <ServicesSection profile={profile} onBook={book} onNavigate={go} />}
                 {section === "vehicles" && <VehiclesSection vehicles={vehicles} onRegister={registerVehicle} onNavigate={go} />}
                 {section === "applications" && <ApplicationsSection bookings={bookings} onNavigate={go} onCancel={(id) => void cancelBooking(id)} />}
-                {section === "fines" && <FinesSection fines={fines} onPay={(fine) => void payFine(fine)} />}
+                {section === "fines" && <FinesSection fines={fines} onPaid={loadData} onNavigate={go} />}
+                {section === "scan" && <DocumentScannerSection vehicles={vehicles} onSaved={loadData} />}
                 {section === "documents" && <DocumentsSection bookings={bookings} vehicles={vehicles} />}
                 {section === "notifications" && (
                   <NotificationsSection
