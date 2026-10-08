@@ -1,0 +1,10 @@
+[build]
+  command = "bun run build"
+  publish = "dist"
+
+[build.environment]
+  # bun.lock (text lockfile) and bunfig's minimumReleaseAge need a recent bun
+  BUN_VERSION = "1.3.12"
+  # Build the TanStack Start server for Netlify Functions instead of the
+  # Cloudflare default used by @lovable.dev/vite-tanstack-config
+  NITRO_PRESET = "netlify"
